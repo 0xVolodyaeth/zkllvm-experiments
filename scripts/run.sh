@@ -114,17 +114,19 @@ run_assigner() {
         cd -
     else
         cd "$REPO_ROOT/build"
-        assigner \
-          -b src/template.ll \
-          -i ../src/main-input.json \
-          -c template.crct \
-          -t template.tbl \
-          -e pallas
-        cd -
-        check_file_exists "$REPO_ROOT/build/template.crct"
-        check_file_exists "$REPO_ROOT/build/template.tbl"
+        time (  # Added time here
+          assigner \
+            -b src/template.ll \
+            -i ../src/main-input.json \
+            -c template.crct \
+            -t template.tbl \
+            -e pallas
+          cd -
+          check_file_exists "$REPO_ROOT/build/template.crct"
+          check_file_exists "$REPO_ROOT/build/template.tbl"
+        )
     fi
-  }
+}
 
 
 # Build circuit parameter / gate argument files.
@@ -143,16 +145,7 @@ build_circuit_params() {
         cd -
     else
         cd "$REPO_ROOT/build"
-        transpiler \
-          -m gen-gate-argument \
-          -i ../src/main-input.json \
-          -t template.tbl \
-          -c template.crct \
-          -o template \
-          --optimize-gates
-        check_file_exists "$REPO_ROOT/build/template/gate_argument.sol"
-        check_file_exists "$REPO_ROOT/build/template/linked_libs_list.json"
-        check_file_exists "$REPO_ROOT/build/template/public_input.json"
+        transpiler -m gen-evm-verifier -o template -c template.crct -t template.tbl
 
         transpiler \
           -m gen-circuit-params \
@@ -221,11 +214,13 @@ prove() {
         cd -
     else
         cd "$REPO_ROOT"
+        time (
         proof-generator \
             --circuit="$REPO_ROOT/build/template.crct" \
             --assignment-table="$REPO_ROOT/build/template.tbl" \
             --proof="$REPO_ROOT/build/template/proof.bin"
         check_file_exists "$REPO_ROOT/build/template/proof.bin"
+        )
     fi
 }
 
